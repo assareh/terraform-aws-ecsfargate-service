@@ -1,0 +1,12 @@
+.terraform/
+**/.terraform/*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# .tfvars files
+*.tfvars
+.env
+
+remote_backend.tf
