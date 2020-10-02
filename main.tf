@@ -176,13 +176,13 @@ resource "aws_iam_role_policy" "task_init_policy" {
 ## ALB
 
 resource "aws_alb" "main" {
-  name            = "${var.region}-${var.environment}-${var.app_name}-alb"
+  name            = "${var.environment}-${var.app_name}-alb"
   subnets         = aws_subnet.main.*.id
   security_groups = [aws_security_group.lb_sg.id]
 }
 
 resource "aws_alb_target_group" "test" {
-  name        = "${var.region}-${var.environment}-${var.app_name}-tgt-grp"
+  name        = "${var.environment}-${var.app_name}-tgt-grp"
   port        = 80
   protocol    = "HTTP"
   target_type = "ip"
