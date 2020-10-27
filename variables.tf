@@ -50,3 +50,12 @@ variable "service_desired" {
   description = "Desired numbers of containers in the ecs service"
   default     = "2"
 }
+
+locals {
+  # Common tags to be assigned to all resources
+  common_tags = {
+    Owner       = var.owner
+    Purpose     = var.description
+    Environment = var.environment
+  }
+}

@@ -8,6 +8,7 @@ data "aws_availability_zones" "available" {}
 
 resource "aws_vpc" "main" {
   cidr_block = "10.10.0.0/16"
+  tags       = local.common_tags
 }
 
 resource "aws_subnet" "main" {
@@ -15,14 +16,17 @@ resource "aws_subnet" "main" {
   cidr_block        = cidrsubnet(aws_vpc.main.cidr_block, 8, count.index)
   availability_zone = data.aws_availability_zones.available.names[count.index]
   vpc_id            = aws_vpc.main.id
+  tags              = local.common_tags
 }
 
 resource "aws_internet_gateway" "gw" {
   vpc_id = aws_vpc.main.id
+  tags   = local.common_tags
 }
 
 resource "aws_route_table" "r" {
   vpc_id = aws_vpc.main.id
+  tags   = local.common_tags
 
   route {
     cidr_block = "0.0.0.0/0"
@@ -43,6 +47,7 @@ resource "aws_security_group" "lb_sg" {
 
   vpc_id = aws_vpc.main.id
   name   = "${var.region}-${var.environment}-${var.app_name}-ecs-lbsg"
+  tags   = local.common_tags
 
   ingress {
     protocol    = "tcp"
@@ -66,6 +71,7 @@ resource "aws_security_group" "instance_sg" {
   description = "controls direct access to application instances"
   vpc_id      = aws_vpc.main.id
   name        = "${var.region}-${var.environment}-${var.app_name}-ecs-inst-sg"
+  tags        = local.common_tags
 
   ingress {
     protocol  = "tcp"
@@ -89,6 +95,7 @@ resource "aws_security_group" "instance_sg" {
 
 resource "aws_ecs_cluster" "main" {
   name = "${var.region}-${var.environment}-${var.app_name}-ecs-cluster"
+  tags = local.common_tags
 }
 
 resource "aws_ecs_service" "main" {
@@ -97,6 +104,7 @@ resource "aws_ecs_service" "main" {
   launch_type     = "FARGATE"
   task_definition = aws_ecs_task_definition.main.arn
   desired_count   = var.service_desired
+  tags            = local.common_tags
 
   load_balancer {
     target_group_arn = aws_alb_target_group.test.id
@@ -134,6 +142,7 @@ resource "aws_ecs_task_definition" "main" {
   execution_role_arn       = aws_iam_role.task_init.arn
   cpu                      = 1024
   memory                   = 2048
+  tags                     = local.common_tags
 }
 
 ## IAM
@@ -141,6 +150,7 @@ resource "aws_ecs_task_definition" "main" {
 resource "aws_iam_role" "task_init" {
   name               = "${var.region}-${var.environment}-${var.app_name}-task-init-role"
   assume_role_policy = data.aws_iam_policy_document.assume_role_policy_definition.json
+  tags               = local.common_tags
 }
 
 data "aws_iam_policy_document" "assume_role_policy_definition" {
@@ -179,6 +189,7 @@ resource "aws_alb" "main" {
   name            = "${var.region}-${var.environment}-${var.app_name}-alb"
   subnets         = aws_subnet.main.*.id
   security_groups = [aws_security_group.lb_sg.id]
+  tags            = local.common_tags
 }
 
 resource "aws_alb_target_group" "test" {
@@ -187,6 +198,7 @@ resource "aws_alb_target_group" "test" {
   protocol    = "HTTP"
   target_type = "ip"
   vpc_id      = aws_vpc.main.id
+  tags        = local.common_tags
 }
 
 resource "aws_alb_listener" "front_end" {
@@ -204,8 +216,10 @@ resource "aws_alb_listener" "front_end" {
 
 resource "aws_cloudwatch_log_group" "ecs" {
   name = "${var.region}-${var.environment}-${var.app_name}/ecs"
+  tags = local.common_tags
 }
 
 resource "aws_cloudwatch_log_group" "app" {
   name = "${var.region}-${var.environment}-${var.app_name}/app"
+  tags = local.common_tags
 }
